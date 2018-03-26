@@ -200,6 +200,20 @@ func TestAccAWSRouteTable_panicEmptyRoute(t *testing.T) {
 	})
 }
 
+func TestAccAWSRouteTable_Route_GatewayID_Validation(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckRouteTableDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccRouteTableConfig_Route_GatewayID_NatGatewayID,
+				ExpectError: regexp.MustCompile(`should use nat_gateway_id attribute instead`),
+			},
+		},
+	})
+}
+
 func testAccCheckRouteTableDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*AWSClient).ec2conn
 
@@ -574,6 +588,16 @@ resource "aws_route_table" "foo" {
 	vpc_id = "${aws_vpc.foo.id}"
 
   route {
+  }
+}
+`
+
+const testAccRouteTableConfig_Route_GatewayID_NatGatewayID = `
+resource "aws_route_table" "test" {
+  vpc_id = "vpc-12345678"
+
+  route {
+    gateway_id = "nat-12345678"
   }
 }
 `

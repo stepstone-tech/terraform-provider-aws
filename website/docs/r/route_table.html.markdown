@@ -16,12 +16,6 @@ defined in-line. At this time you cannot use a Route Table with in-line routes
 in conjunction with any Route resources. Doing so will cause
 a conflict of rule settings and will overwrite rules.
 
-~> **NOTE on `gateway_id` and `nat_gateway_id`:** The AWS API is very forgiving with these two
-attributes and the `aws_route_table` resource can be created with a NAT ID specified as a Gateway ID attribute.
-This _will_ lead to a permanent diff between your configuration and statefile, as the API returns the correct
-parameters in the returned route table. If you're experiencing constant diffs in your `aws_route_table` resources,
-the first thing to check is whether or not you're specifying a NAT ID instead of a Gateway ID, or vice-versa.
-
 ~> **NOTE on `propagating_vgws` and the `aws_vpn_gateway_route_propagation` resource:**
 If the `propagating_vgws` argument is present, it's not supported to _also_
 define route propagations using `aws_vpn_gateway_route_propagation`, since
@@ -65,7 +59,7 @@ Each route supports the following:
 * `cidr_block` - (Optional) The CIDR block of the route.
 * `ipv6_cidr_block` - Optional) The Ipv6 CIDR block of the route
 * `egress_only_gateway_id` - (Optional) The Egress Only Internet Gateway ID.
-* `gateway_id` - (Optional) The Internet Gateway ID.
+* `gateway_id` - (Optional) The Internet Gateway ID. Must use `nat_gateway_id` if specifying a NAT Gateway, otherwise will display perpetual difference.
 * `nat_gateway_id` - (Optional) The NAT Gateway ID.
 * `instance_id` - (Optional) The EC2 instance ID.
 * `vpc_peering_connection_id` - (Optional) The VPC Peering ID.
@@ -78,6 +72,7 @@ the VPC's CIDR block to "local", is created implicitly and cannot be specified.
 ## Attributes Reference
 
 The following attributes are exported:
+
 ~> **NOTE:** Only the target that is entered is exported as a readable
 attribute once the route resource is created.
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -65,6 +66,13 @@ func resourceAwsRouteTable() *schema.Resource {
 						"gateway_id": {
 							Type:     schema.TypeString,
 							Optional: true,
+							ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
+								value := v.(string)
+								if strings.HasPrefix(value, "nat-") {
+									errors = append(errors, fmt.Errorf("%q = %q should use nat_gateway_id attribute instead", k, value))
+								}
+								return
+							},
 						},
 
 						"instance_id": {
