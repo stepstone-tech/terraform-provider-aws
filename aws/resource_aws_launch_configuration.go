@@ -149,7 +149,6 @@ func resourceAwsLaunchConfiguration() *schema.Resource {
 						"delete_on_termination": {
 							Type:     schema.TypeBool,
 							Optional: true,
-							Default:  true,
 							ForceNew: true,
 						},
 
@@ -347,6 +346,9 @@ func resourceAwsLaunchConfigurationCreate(d *schema.ResourceData, meta interface
 			bd := v.(map[string]interface{})
 			ebs := &autoscaling.Ebs{}
 
+			// Both EBS & no-device cannot be specified (those are opposite things)
+			// There's currently no way to check if a boolean arg was specified or not
+			// as GetOkExists doesn't work inside Sets
 			if v, ok := bd["no_device"].(bool); !ok && v {
 				ebs.DeleteOnTermination = aws.Bool(bd["delete_on_termination"].(bool))
 			}
@@ -607,6 +609,9 @@ func readBlockDevicesFromLaunchConfiguration(d *schema.ResourceData, lc *autosca
 		}
 		if bdm.Ebs != nil && bdm.Ebs.Iops != nil {
 			bd["iops"] = *bdm.Ebs.Iops
+		}
+		if bdm.NoDevice != nil {
+			bd["no_device"] = *bdm.NoDevice
 		}
 
 		if bdm.DeviceName != nil && *bdm.DeviceName == *rootDeviceName {

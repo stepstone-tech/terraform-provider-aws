@@ -161,6 +161,28 @@ func TestAccAWSLaunchConfiguration_updateRootBlockDevice(t *testing.T) {
 	})
 }
 
+func TestAccAWSLaunchConfiguration_ebs_noDevice(t *testing.T) {
+	var conf autoscaling.LaunchConfiguration
+	rInt := acctest.RandInt()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckAWSLaunchConfigurationDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAWSLaunchConfigurationConfigEbsNoDevice(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAWSLaunchConfigurationExists("aws_launch_configuration.bar", &conf),
+					resource.TestCheckResourceAttr("aws_launch_configuration.bar", "ebs_block_device.#", "1"),
+					resource.TestCheckResourceAttr("aws_launch_configuration.bar", "ebs_block_device.3735149014.device_name", "/dev/sda2"),
+					resource.TestCheckResourceAttr("aws_launch_configuration.bar", "ebs_block_device.3735149014.no_device", "true"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccAWSLaunchConfiguration_withSpotPrice(t *testing.T) {
 	var conf autoscaling.LaunchConfiguration
 
@@ -452,6 +474,30 @@ resource "aws_launch_configuration" "bar" {
 		volume_size = 20
 	}
 
+}
+`, rInt)
+}
+
+func testAccAWSLaunchConfigurationConfigEbsNoDevice(rInt int) string {
+	return fmt.Sprintf(`
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/ebs/ubuntu-precise-12.04-i386-server-*"]
+  }
+  owners = ["099720109477"] # Canonical
+}
+
+resource "aws_launch_configuration" "bar" {
+  name_prefix = "tf-acc-test-%d"
+  image_id = "${data.aws_ami.ubuntu.id}"
+  instance_type = "m1.small"
+
+  ebs_block_device {
+    device_name = "/dev/sda2"
+    no_device = true
+  }
 }
 `, rInt)
 }
