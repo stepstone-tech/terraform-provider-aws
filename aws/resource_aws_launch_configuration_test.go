@@ -146,7 +146,7 @@ func TestAccAWSLaunchConfiguration_updateRootBlockDevice(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSLaunchConfigurationExists("aws_launch_configuration.bar", &conf),
 					resource.TestCheckResourceAttr(
-						"aws_launch_configuration.bar", "root_block_device.0.volume_size", "11"),
+						"aws_launch_configuration.bar", "block_device_mapping.0.volume_size", "11"),
 				),
 			},
 			{
@@ -154,7 +154,7 @@ func TestAccAWSLaunchConfiguration_updateRootBlockDevice(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSLaunchConfigurationExists("aws_launch_configuration.bar", &conf),
 					resource.TestCheckResourceAttr(
-						"aws_launch_configuration.bar", "root_block_device.0.volume_size", "20"),
+						"aws_launch_configuration.bar", "block_device_mapping.0.volume_size", "20"),
 				),
 			},
 		},
@@ -174,9 +174,9 @@ func TestAccAWSLaunchConfiguration_ebs_noDevice(t *testing.T) {
 				Config: testAccAWSLaunchConfigurationConfigEbsNoDevice(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSLaunchConfigurationExists("aws_launch_configuration.bar", &conf),
-					resource.TestCheckResourceAttr("aws_launch_configuration.bar", "ebs_block_device.#", "1"),
-					resource.TestCheckResourceAttr("aws_launch_configuration.bar", "ebs_block_device.3735149014.device_name", "/dev/sda2"),
-					resource.TestCheckResourceAttr("aws_launch_configuration.bar", "ebs_block_device.3735149014.no_device", "true"),
+					resource.TestCheckResourceAttr("aws_launch_configuration.bar", "block_device_mapping.#", "1"),
+					resource.TestCheckResourceAttr("aws_launch_configuration.bar", "block_device_mapping.3735149014.device_name", "/dev/sda2"),
+					resource.TestCheckResourceAttr("aws_launch_configuration.bar", "block_device_mapping.3735149014.no_device", "true"),
 				),
 			},
 		},
@@ -303,7 +303,7 @@ func TestAccAWSLaunchConfiguration_updateEbsBlockDevices(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSLaunchConfigurationExists("aws_launch_configuration.baz", &conf),
 					resource.TestCheckResourceAttr(
-						"aws_launch_configuration.baz", "ebs_block_device.2764618555.volume_size", "9"),
+						"aws_launch_configuration.baz", "block_device_mapping.2764618555.volume_size", "9"),
 				),
 			},
 			{
@@ -311,7 +311,7 @@ func TestAccAWSLaunchConfiguration_updateEbsBlockDevices(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSLaunchConfigurationExists("aws_launch_configuration.baz", &conf),
 					resource.TestCheckResourceAttr(
-						"aws_launch_configuration.baz", "ebs_block_device.3859927736.volume_size", "10"),
+						"aws_launch_configuration.baz", "block_device_mapping.3859927736.volume_size", "10"),
 				),
 			},
 		},
@@ -451,9 +451,12 @@ resource "aws_launch_configuration" "bar" {
   user_data = "foobar-user-data"
   associate_public_ip_address = true
 
-	root_block_device {
-		volume_type = "gp2"
-		volume_size = 11
+	block_device_mapping {
+		is_root = true
+		ebs {
+			volume_type = "gp2"
+			volume_size = 11
+		}
 	}
 
 }
@@ -469,9 +472,12 @@ resource "aws_launch_configuration" "bar" {
   user_data = "foobar-user-data"
   associate_public_ip_address = true
 
-	root_block_device {
-		volume_type = "gp2"
-		volume_size = 20
+	block_device_mapping {
+		is_root = true
+		ebs {
+			volume_type = "gp2"
+			volume_size = 20
+		}
 	}
 
 }
@@ -494,7 +500,7 @@ resource "aws_launch_configuration" "bar" {
   image_id = "${data.aws_ami.ubuntu.id}"
   instance_type = "m1.small"
 
-  ebs_block_device {
+  block_device_mapping {
     device_name = "/dev/sda2"
     no_device = true
   }
@@ -510,21 +516,28 @@ resource "aws_launch_configuration" "bar" {
   user_data = "foobar-user-data"
   associate_public_ip_address = true
 
-	root_block_device {
-		volume_type = "gp2"
-		volume_size = 11
+	block_device_mapping {
+		is_root = true
+		ebs {
+			volume_type = "gp2"
+			volume_size = 11
+		}
 	}
-	ebs_block_device {
+	block_device_mapping {
 		device_name = "/dev/sdb"
-		volume_size = 9
+		ebs {
+			volume_size = 9
+		}
 	}
-	ebs_block_device {
+	block_device_mapping {
 		device_name = "/dev/sdc"
-		volume_size = 10
-		volume_type = "io1"
-		iops = 100
+		ebs {
+			volume_size = 10
+			volume_type = "io1"
+			iops = 100
+		}
 	}
-	ephemeral_block_device {
+	block_device_mapping {
 		device_name = "/dev/sde"
 		virtual_name = "ephemeral0"
 	}
@@ -565,14 +578,19 @@ resource "aws_launch_configuration" "baz" {
    instance_type = "t2.micro"
    associate_public_ip_address = false
 
-   	root_block_device {
-   		volume_type = "gp2"
-		volume_size = 11
+   	block_device_mapping {
+   		is_root = true
+   		ebs {
+   			volume_type = "gp2"
+			volume_size = 11
+		}
 	}
-	ebs_block_device {
+	block_device_mapping {
 		device_name = "/dev/sdb"
-		volume_size = 9
-		encrypted = true
+		ebs {
+			volume_size = 9
+			encrypted = true
+		}
 	}
 }
 `
@@ -583,14 +601,19 @@ resource "aws_launch_configuration" "baz" {
    instance_type = "t2.micro"
    associate_public_ip_address = false
 
-   	root_block_device {
-   		volume_type = "gp2"
-		volume_size = 11
+   	block_device_mapping {
+   		is_root = true
+   		ebs {
+   			volume_type = "gp2"
+			volume_size = 11
+		}
 	}
-	ebs_block_device {
+	block_device_mapping {
 		device_name = "/dev/sdb"
-		volume_size = 10
-		encrypted = true
+		ebs {
+			volume_size = 10
+			encrypted = true
+		}
 	}
 }
 `
